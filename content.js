@@ -7,6 +7,9 @@
 //    are clickable), so CSS :hover alone would not fire over empty parts of the bar.
 //    Instead we tag the bar with data-top-bar-active while the mouse is inside its box.
 // content.css does the hiding and showing.
+//
+// Debug: run localStorage.topBarHoverDebug = "1" in the page console, reload, and read
+// the "[top-bar-hover]" lines in the console.
 
 (() => {
   const ATTR = "data-top-bar-hover";
@@ -21,17 +24,31 @@
   const tagged = new Set();
   let timer = 0;
 
-  // Touches the top edge, bar-shaped, at least `minWidth` wide, holds a button/link.
-  function isBarShaped(el, minWidth) {
-    if (!(el instanceof HTMLElement)) return false;
-    if (el === document.body || el === document.documentElement) return false;
+  let debug = false;
+  try {
+    debug = localStorage.getItem("topBarHoverDebug") === "1";
+  } catch (_) {}
+  const log = (...a) => debug && console.debug("[top-bar-hover]", Math.round(performance.now()), ...a);
+
+  // Touches the top edge and is bar-shaped.
+  function hasBarGeometry(el, minWidth) {
     const r = el.getBoundingClientRect();
     return (
       r.top >= -2 &&
       r.top <= 2 &&
       r.height >= MIN_H &&
       r.height <= MAX_H &&
-      r.width >= Math.max(minWidth, 1) &&
+      r.width >= Math.max(minWidth, 1)
+    );
+  }
+
+  // A new candidate must also hold a button/link. (An element we already tag is not
+  // re-checked for that: pages briefly empty their header while re-rendering.)
+  function isBarShaped(el, minWidth) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el === document.body || el === document.documentElement) return false;
+    return (
+      hasBarGeometry(el, minWidth) &&
       el.querySelector('button, a[href], [role="button"]') !== null
     );
   }
@@ -56,42 +73,57 @@
         }
       }
     }
-    return best ? [best] : [];
+    return best;
   }
 
-  function findBars() {
-    const known = [...document.querySelectorAll(KNOWN)].filter((el) =>
-      isBarShaped(el, 0)
-    );
-    return known.length ? known : findByShape();
+  function tag(el) {
+    // Hide at once: without this the newly tagged bar would first sit visible through
+    // the fade-out delay, which looks like a flash.
+    el.style.setProperty("transition", "none", "important");
+    el.setAttribute(ATTR, "");
+    void el.offsetWidth; // apply the hidden state now, with no transition
+    el.style.removeProperty("transition");
+    tagged.add(el);
+    log("tag", el.tagName, el.className);
+  }
+
+  function untag(el) {
+    el.removeAttribute(ATTR);
+    el.removeAttribute(ACTIVE);
+    tagged.delete(el);
+    log("untag", el.tagName, el.className);
   }
 
   function update() {
     timer = 0;
-    const next = new Set(findBars());
-    for (const el of tagged) {
-      if (next.has(el)) continue;
-      el.removeAttribute(ATTR);
-      el.removeAttribute(ACTIVE);
-      tagged.delete(el);
+
+    // Keep what we already tag while it is still in the page and still bar-shaped.
+    for (const el of [...tagged]) {
+      if (!el.isConnected || !hasBarGeometry(el, 0)) untag(el);
     }
-    for (const el of next) {
-      if (tagged.has(el)) continue;
-      el.setAttribute(ATTR, "");
-      tagged.add(el);
+    for (const el of document.querySelectorAll(KNOWN)) {
+      if (!tagged.has(el) && isBarShaped(el, 0)) tag(el);
     }
+    if (!tagged.size) {
+      const found = findByShape();
+      if (found) tag(found);
+    }
+
     // Some pages (artifact pages) place their content below the bar using an inline
     // `--bar-h` variable on <html>. Tell the CSS to zero it, so hiding the bar also
-    // gives the space back instead of leaving an empty strip.
+    // gives the space back instead of leaving an empty strip. Once on, it stays on
+    // while a bar is tagged (the page may drop and re-set --bar-h; flipping the layout
+    // back and forth would resize the whole page each time).
     const html = document.documentElement;
-    html.toggleAttribute(
-      COLLAPSE,
-      tagged.size > 0 && html.style.getPropertyValue("--bar-h") !== ""
-    );
+    const want = tagged.size > 0 && (html.hasAttribute(COLLAPSE) || html.style.getPropertyValue("--bar-h") !== "");
+    if (want !== html.hasAttribute(COLLAPSE)) {
+      html.toggleAttribute(COLLAPSE, want);
+      log("collapse", want);
+    }
   }
 
   function schedule() {
-    if (!timer) timer = window.setTimeout(update, 150);
+    if (!timer) timer = window.setTimeout(update, 50);
   }
 
   function setActive(el, on) {
@@ -121,6 +153,17 @@
 
   update();
   document.addEventListener("pointermove", onPointerMove, { passive: true });
+  // Over an <iframe> (the artifact) the page gets no pointermove at all, so the last
+  // "inside the bar" state would stay forever. Clear it when the pointer enters an
+  // iframe or leaves the page.
+  document.addEventListener(
+    "pointerover",
+    (e) => e.target.tagName === "IFRAME" && clearActive(),
+    { passive: true }
+  );
+  document.addEventListener("pointerout", (e) => !e.relatedTarget && clearActive(), {
+    passive: true,
+  });
   document.documentElement.addEventListener("mouseleave", clearActive);
   window.addEventListener("blur", clearActive);
   // claude.ai is a single-page app: the bar can be replaced at any time.
