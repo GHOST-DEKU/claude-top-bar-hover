@@ -6,11 +6,14 @@
     transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
   }
 
-  /* Pages that reserve room for the bar with --bar-h (set inline on <html>): give the
-     room back, and let the bar float above the content when it is shown. `inherit`
-     gives it the page background so it is readable over the content. */
-  html[data-top-bar-collapse] {
-    --bar-h: 0px !important;
+  /* Pages that reserve room for the bar with --bar-h (set inline on <html>), such as
+     artifact pages: move the content up to the very top and let the bar float above it
+     when it is shown. `inherit` gives the bar the page background so it is readable.
+     Do NOT change --bar-h itself: on those pages the bar's own height is var(--bar-h),
+     so zeroing it makes the bar 0px high (nothing left to hover). */
+  html[data-top-bar-collapse] > body > main {
+    top: 0 !important;
+    height: 100% !important;
   }
   html[data-top-bar-collapse] [data-top-bar-hover] {
     z-index: 50;

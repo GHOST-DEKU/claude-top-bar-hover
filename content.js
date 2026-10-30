@@ -22,7 +22,10 @@
   const MAX_H = 80;
   const MIN_WIDTH_RATIO = 0.4; // fallback: at least 40% of the window wide
 
+  const GRACE_MS = 1500; // how long a tagged bar may look wrong before we untag it
+
   const tagged = new Set();
+  const badSince = new Map(); // tagged element -> when it first stopped looking like a bar
   let timer = 0;
 
   let debug = false;
@@ -100,8 +103,20 @@
     timer = 0;
 
     // Keep what we already tag while it is still in the page and still bar-shaped.
+    // A bad shape must last a while before we give up (pages animate their header).
+    const now = performance.now();
     for (const el of [...tagged]) {
-      if (!el.isConnected || !hasBarGeometry(el, 0)) untag(el);
+      if (!el.isConnected) {
+        untag(el);
+      } else if (hasBarGeometry(el, 0)) {
+        badSince.delete(el);
+      } else {
+        if (!badSince.has(el)) badSince.set(el, now);
+        if (now - badSince.get(el) > GRACE_MS) {
+          badSince.delete(el);
+          untag(el);
+        }
+      }
     }
     for (const el of document.querySelectorAll(KNOWN)) {
       if (!tagged.has(el) && isBarShaped(el, 0)) tag(el);
@@ -207,6 +222,9 @@
     attributes: true,
     attributeFilter: ["style"],
   });
+  // Safety net: a bar can appear or settle (CSS animation) with no DOM change to wake
+  // the observer above, which left it visible for good.
+  window.setInterval(update, 1000);
   window.addEventListener("resize", schedule);
   window.addEventListener("popstate", schedule);
 })();

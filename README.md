@@ -38,14 +38,10 @@ For a permanent install the add-on must be signed on addons.mozilla.org.)
 `content.css` hides the marked element with `opacity: 0`. The bar is not removed or moved.
 
 On pages that reserve room for the bar with an inline `--bar-h` variable on `<html>`
-(artifact pages), the script sets `data-top-bar-collapse` on `<html>` and the CSS zeroes
-`--bar-h`. The content then moves up to use the full height, and the bar floats over it
-(with the page background) when shown. On other pages the bar keeps its place in the layout.
-
-The real header ignores the mouse except on its buttons (`pointer-events: none`), so CSS `:hover`
-alone would only fire over the invisible buttons. The script therefore watches the mouse and sets
-`data-top-bar-active` while the pointer is inside the bar's box. Clicks still go to whatever
-is under the pointer, as before.
+(artifact pages), the script sets `data-top-bar-collapse` on `<html>`. The CSS then moves the
+page's `<main>` to the very top, and the bar floats over it (with the page background) when shown.
+`--bar-h` itself is left alone: on those pages the bar's own height is `var(--bar-h)`, so setting it
+to 0 would shrink the bar to nothing. On other pages the bar keeps its place in the layout.
 
 A `MutationObserver` re-checks when the page changes, because claude.ai is a single-page app.
 
