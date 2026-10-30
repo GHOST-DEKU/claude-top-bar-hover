@@ -35,13 +35,26 @@ For a permanent install the add-on must be signed on addons.mozilla.org.)
 2. Fallback, if that class is ever renamed: any element that touches the top edge of the
    window, is bar-shaped (32 to 80 px high, at least 40% of the window wide) and contains a button.
 
-`content.css` hides the marked element with `opacity: 0`. The bar is not removed or moved.
+`content.css` hides the marked element with `opacity: 0`.
 
-On pages that reserve room for the bar with an inline `--bar-h` variable on `<html>`
-(artifact pages), the script sets `data-top-bar-collapse` on `<html>`. The CSS then moves the
-page's `<main>` to the very top, and the bar floats over it (with the page background) when shown.
-`--bar-h` itself is left alone: on those pages the bar's own height is `var(--bar-h)`, so setting it
-to 0 would shrink the bar to nothing. On other pages the bar keeps its place in the layout.
+A bar that sits in the normal page flow (for example on artifact pages) would leave an empty strip
+when hidden. The script marks such a bar `data-top-bar-float`; the CSS then takes it out of the flow
+(`position: absolute` at the top, below the app's sidebar button), so the content moves up, and gives
+it a solid background (copied from the page) so it is readable when it floats over the content on hover.
+Bars that are already absolute or fixed are left alone.
+
+The app's collapsed-sidebar button (`.df-collapsed-chrome`) sits next to the bar, outside it. It is
+hidden and shown together with the bar.
+
+Some pages place their content with an inline `--bar-h` on `<html>` (`<main>` below `var(--bar-h)`).
+There the script sets `data-top-bar-collapse` and the CSS moves `<main>` to the top. `--bar-h` itself
+is left alone: on those pages the bar's own height is `var(--bar-h)`, so zeroing it would shrink the
+bar to nothing.
+
+The real header ignores the mouse except on its buttons (`pointer-events: none`), so CSS `:hover`
+alone would only fire over the invisible buttons. The script therefore watches the mouse and sets
+`data-top-bar-active` while the pointer is inside the bar's box. Clicks still go to whatever is
+under the pointer.
 
 A `MutationObserver` re-checks when the page changes, because claude.ai is a single-page app.
 

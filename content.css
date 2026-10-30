@@ -6,18 +6,43 @@
     transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
   }
 
-  /* Pages that reserve room for the bar with --bar-h (set inline on <html>), such as
-     artifact pages: move the content up to the very top and let the bar float above it
-     when it is shown. `inherit` gives the bar the page background so it is readable.
+  /* A bar that sits in the normal page flow (content.js marks it data-top-bar-float)
+     would leave an empty strip when hidden. Take it out of the flow instead, so the
+     content moves up, and float it over the content when it is shown. It gets a solid
+     background (--top-bar-hover-bg, set by content.js) so it is readable over the content.
+     z-index 40 stays below the app's collapsed-sidebar button (50) so that stays clickable. */
+  [data-top-bar-float] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 40;
+    background-color: var(--top-bar-hover-bg, inherit);
+  }
+
+  /* Some pages place their content with an inline --bar-h on <html>:
+     <main> is positioned below var(--bar-h). Move it to the very top.
      Do NOT change --bar-h itself: on those pages the bar's own height is var(--bar-h),
      so zeroing it makes the bar 0px high (nothing left to hover). */
   html[data-top-bar-collapse] > body > main {
     top: 0 !important;
     height: 100% !important;
   }
-  html[data-top-bar-collapse] [data-top-bar-hover] {
-    z-index: 50;
-    background-color: inherit;
+
+  /* The app's collapsed-sidebar button floats next to the bar, outside it. Hide it
+     with the bar, and show it whenever the bar is shown. */
+  html:has([data-top-bar-hover]) .df-collapsed-chrome {
+    opacity: 0;
+    transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
+  }
+  html:has([data-top-bar-hover][data-top-bar-active]) .df-collapsed-chrome,
+  html:has([data-top-bar-hover]:hover) .df-collapsed-chrome,
+  html:has([data-top-bar-hover][data-top-bar-focus]) .df-collapsed-chrome,
+  html:has([data-top-bar-hover] [aria-expanded="true"]) .df-collapsed-chrome,
+  .df-collapsed-chrome:has(:focus-visible) {
+    opacity: 1;
+    transition-duration: 160ms;
+    transition-delay: 0s;
   }
 
   /* Visible when:
@@ -40,7 +65,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-top-bar-hover] {
+  [data-top-bar-hover],
+  .df-collapsed-chrome {
     transition: none !important;
   }
 }

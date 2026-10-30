@@ -15,6 +15,7 @@
   const ATTR = "data-top-bar-hover";
   const ACTIVE = "data-top-bar-active";
   const FOCUS = "data-top-bar-focus"; // keyboard focus inside the bar
+  const FLOAT = "data-top-bar-float"; // bar was in the page flow: float it over the content
   const COLLAPSE = "data-top-bar-collapse"; // set on <html>, see update()
   const KNOWN = ".dframe-header";
   const PROBE_Y = 24; // probe line, inside a normal 40-60px bar
@@ -80,10 +81,35 @@
     return best;
   }
 
+  // A bar that sits in the normal page flow keeps its space when hidden, leaving an empty
+  // strip. Float such a bar over the content instead (content.css, [data-top-bar-float]).
+  // Bars that are already absolute or fixed take no space and are left alone.
+  function shouldFloat(el) {
+    const pos = getComputedStyle(el).position;
+    return pos === "static" || pos === "relative" || pos === "sticky";
+  }
+
+  // A floating bar needs a solid background to be readable over the content: its own,
+  // or else the nearest one behind it. Re-run now and then in case the theme changes.
+  function syncBg(el) {
+    if (!el.hasAttribute(FLOAT)) return;
+    let color = "";
+    for (let e = el; e && !color; e = e.parentElement) {
+      const c = getComputedStyle(e).backgroundColor;
+      if (c !== "rgba(0, 0, 0, 0)" && c !== "transparent") color = c;
+    }
+    if (color && el.style.getPropertyValue("--top-bar-hover-bg") !== color) {
+      el.style.setProperty("--top-bar-hover-bg", color);
+    }
+  }
+
   function tag(el) {
+    const float = shouldFloat(el); // read before we change anything
     // Hide at once: without this the newly tagged bar would first sit visible through
     // the fade-out delay, which looks like a flash.
     el.style.setProperty("transition", "none", "important");
+    if (float) el.setAttribute(FLOAT, "");
+    syncBg(el);
     el.setAttribute(ATTR, "");
     void el.offsetWidth; // apply the hidden state now, with no transition
     el.style.removeProperty("transition");
@@ -95,6 +121,8 @@
     el.removeAttribute(ATTR);
     el.removeAttribute(ACTIVE);
     el.removeAttribute(FOCUS);
+    el.removeAttribute(FLOAT);
+    el.style.removeProperty("--top-bar-hover-bg");
     tagged.delete(el);
     log("untag", el.tagName, el.className);
   }
@@ -125,6 +153,7 @@
       const found = findByShape();
       if (found) tag(found);
     }
+    for (const el of tagged) syncBg(el);
 
     // Some pages (artifact pages) place their content below the bar using an inline
     // `--bar-h` variable on <html>. Tell the CSS to zero it, so hiding the bar also
