@@ -14,6 +14,7 @@
 (() => {
   const ATTR = "data-top-bar-hover";
   const ACTIVE = "data-top-bar-active";
+  const FOCUS = "data-top-bar-focus"; // keyboard focus inside the bar
   const COLLAPSE = "data-top-bar-collapse"; // set on <html>, see update()
   const KNOWN = ".dframe-header";
   const PROBE_Y = 24; // probe line, inside a normal 40-60px bar
@@ -90,6 +91,7 @@
   function untag(el) {
     el.removeAttribute(ATTR);
     el.removeAttribute(ACTIVE);
+    el.removeAttribute(FOCUS);
     tagged.delete(el);
     log("untag", el.tagName, el.className);
   }
@@ -126,9 +128,10 @@
     if (!timer) timer = window.setTimeout(update, 50);
   }
 
-  function setActive(el, on) {
-    if (on !== el.hasAttribute(ACTIVE)) el.toggleAttribute(ACTIVE, on);
+  function setFlag(el, name, on) {
+    if (on !== el.hasAttribute(name)) el.toggleAttribute(name, on);
   }
+  const setActive = (el, on) => setFlag(el, ACTIVE, on);
 
   function onPointerMove(e) {
     if (!tagged.size) return;
@@ -150,6 +153,34 @@
   function clearActive() {
     for (const el of tagged) setActive(el, false);
   }
+
+  // Keyboard focus shows the bar. We do not use CSS :focus-visible for this: the page
+  // moves focus into its toolbar by script (roving tabindex), and a script focus with
+  // no mouse use also counts as :focus-visible, which would pin the bar open.
+  // So: only count a focus that follows a Tab/arrow key press.
+  let lastKeyNav = -Infinity; // not 0: that would count the first second after load as a key press
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key === "Tab" || e.key.startsWith("Arrow")) lastKeyNav = performance.now();
+    },
+    true
+  );
+  document.addEventListener(
+    "focusin",
+    (e) => {
+      const byKeyboard = performance.now() - lastKeyNav < 1000;
+      for (const el of tagged) setFlag(el, FOCUS, byKeyboard && el.contains(e.target));
+    },
+    true
+  );
+  document.addEventListener(
+    "focusout",
+    (e) => {
+      if (!e.relatedTarget) for (const el of tagged) setFlag(el, FOCUS, false);
+    },
+    true
+  );
 
   update();
   document.addEventListener("pointermove", onPointerMove, { passive: true });

@@ -21,15 +21,15 @@
      - the mouse is inside the bar's box (data-top-bar-active, set by content.js;
        needed because the real header ignores the mouse except on its buttons), or
      - the mouse is over it, or
-     - keyboard focus is inside it (focus-visible, so a mouse click that leaves focus
-       on a button does not pin it open), or
+     - the user moved keyboard focus into it with Tab or the arrow keys
+       (data-top-bar-focus, set by content.js; not :focus-visible, because the page
+       focuses its toolbar by script and that would pin the bar open), or
      - one of its menus is open (the menu lives outside the bar, so the mouse
        leaving the bar would otherwise close it). */
   [data-top-bar-hover][data-top-bar-active],
   [data-top-bar-hover]:hover,
-  [data-top-bar-hover]:has(:focus-visible),
-  [data-top-bar-hover]:has([aria-expanded="true"]),
-  [data-top-bar-hover]:has([data-state="open"]) {
+  [data-top-bar-hover][data-top-bar-focus],
+  [data-top-bar-hover]:has([aria-expanded="true"]) {
     opacity: 1;
     transition-duration: 160ms;
     transition-delay: 0s;
