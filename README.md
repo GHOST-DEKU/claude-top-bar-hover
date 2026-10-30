@@ -29,23 +29,27 @@ For a permanent install the add-on must be signed on addons.mozilla.org.)
 
 ## How it works
 
-The top bar's class names on claude.ai are not stable, so the extension does not rely on them.
-`content.js` looks at the top of the page and picks the element that:
+`content.js` finds the bar and marks it with `data-top-bar-hover`:
 
-1. touches the top edge of the window,
-2. is bar-shaped (32 to 80 px high, at least 40% of the window wide),
-3. contains a button or link.
+1. First choice: the `.dframe-header` element (the header seen on claude.ai).
+2. Fallback, if that class is ever renamed: any element that touches the top edge of the
+   window, is bar-shaped (32 to 80 px high, at least 40% of the window wide) and contains a button.
 
-It marks that element with `data-top-bar-hover`. `content.css` then hides it with `opacity: 0`
-and shows it on `:hover`. The bar keeps its space in the layout, so nothing on the page jumps.
+`content.css` hides the marked element with `opacity: 0`. The bar is not removed or moved,
+so the page layout does not change.
+
+The real header ignores the mouse except on its buttons (`pointer-events: none`), so CSS `:hover`
+alone would only fire over the invisible buttons. The script therefore watches the mouse and sets
+`data-top-bar-active` while the pointer is inside the bar's box. Clicks still go to whatever
+is under the pointer, as before.
 
 A `MutationObserver` re-checks when the page changes, because claude.ai is a single-page app.
 
 ## Known limits
 
-- Detection is by shape, not by exact selector. If Claude changes its layout a lot,
-  it may pick the wrong element or none. Adjust the numbers at the top of `content.js`.
-- The empty strip where the bar was stays blank (the page layout is not changed on purpose).
+- The behavior was tested on a mock page copied from the real header's structure, not on
+  every claude.ai page. If Claude changes its layout a lot, the bar may not be found.
+  Adjust the constants at the top of `content.js`.
 
 ## License
 

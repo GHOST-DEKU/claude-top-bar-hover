@@ -1,19 +1,27 @@
 // Claude Top Bar on Hover
-// Finds the top bar on claude.ai by its position and content (not by class
-// names, which change often) and tags it. content.css does the hiding.
+//
+// 1. Finds the top bar(s) on claude.ai and tags them with data-top-bar-hover.
+//    First choice: the `.dframe-header` element (seen on claude.ai).
+//    Fallback: any wide, bar-shaped element touching the top edge that holds a button.
+// 2. Watches the mouse. The real header has `pointer-events: none` (only its buttons
+//    are clickable), so CSS :hover alone would not fire over empty parts of the bar.
+//    Instead we tag the bar with data-top-bar-active while the mouse is inside its box.
+// content.css does the hiding and showing.
 
 (() => {
   const ATTR = "data-top-bar-hover";
+  const ACTIVE = "data-top-bar-active";
+  const KNOWN = ".dframe-header";
   const PROBE_Y = 24; // probe line, inside a normal 40-60px bar
   const MIN_H = 32;
   const MAX_H = 80;
-  const MIN_WIDTH_RATIO = 0.4; // bar must span at least 40% of the window
+  const MIN_WIDTH_RATIO = 0.4; // fallback: at least 40% of the window wide
 
-  let current = null;
+  const tagged = new Set();
   let timer = 0;
 
-  // A "top bar" = touches the top edge, bar-shaped, wide, and has a button/link.
-  function looksLikeBar(el) {
+  // Touches the top edge, bar-shaped, at least `minWidth` wide, holds a button/link.
+  function isBarShaped(el, minWidth) {
     if (!(el instanceof HTMLElement)) return false;
     if (el === document.body || el === document.documentElement) return false;
     const r = el.getBoundingClientRect();
@@ -22,48 +30,90 @@
       r.top <= 2 &&
       r.height >= MIN_H &&
       r.height <= MAX_H &&
-      r.width >= window.innerWidth * MIN_WIDTH_RATIO &&
+      r.width >= Math.max(minWidth, 1) &&
       el.querySelector('button, a[href], [role="button"]') !== null
     );
   }
 
-  // Look at several points along the top, walk up from what is there,
-  // and keep the widest bar-shaped ancestor.
-  function findBar() {
+  // Fallback: look at several points along the top, walk up from what is there,
+  // and keep the outermost, widest bar-shaped ancestor.
+  function findByShape() {
     const w = window.innerWidth;
+    const minWidth = w * MIN_WIDTH_RATIO;
     const xs = [w - 30, w - 120, w / 2, 120, 30];
     let best = null;
     let bestWidth = 0;
     for (const x of xs) {
       for (const hit of document.elementsFromPoint(x, PROBE_Y)) {
         for (let el = hit; el && el !== document.body; el = el.parentElement) {
-          if (!looksLikeBar(el)) continue;
+          if (!isBarShaped(el, minWidth)) continue;
           const width = el.getBoundingClientRect().width;
-          if (width > bestWidth) {
+          if (width >= bestWidth) {
             best = el;
             bestWidth = width;
           }
         }
       }
     }
-    return best;
+    return best ? [best] : [];
+  }
+
+  function findBars() {
+    const known = [...document.querySelectorAll(KNOWN)].filter((el) =>
+      isBarShaped(el, 0)
+    );
+    return known.length ? known : findByShape();
   }
 
   function update() {
     timer = 0;
-    if (current && current.isConnected && looksLikeBar(current)) return;
-    const next = findBar();
-    if (next === current) return;
-    if (current) current.removeAttribute(ATTR);
-    current = next;
-    if (current) current.setAttribute(ATTR, "");
+    const next = new Set(findBars());
+    for (const el of tagged) {
+      if (next.has(el)) continue;
+      el.removeAttribute(ATTR);
+      el.removeAttribute(ACTIVE);
+      tagged.delete(el);
+    }
+    for (const el of next) {
+      if (tagged.has(el)) continue;
+      el.setAttribute(ATTR, "");
+      tagged.add(el);
+    }
   }
 
   function schedule() {
     if (!timer) timer = window.setTimeout(update, 150);
   }
 
+  function setActive(el, on) {
+    if (on !== el.hasAttribute(ACTIVE)) el.toggleAttribute(ACTIVE, on);
+  }
+
+  function onPointerMove(e) {
+    if (!tagged.size) return;
+    const inZone = e.clientY <= MAX_H; // cheap exit for the rest of the page
+    for (const el of tagged) {
+      let on = false;
+      if (inZone) {
+        const r = el.getBoundingClientRect();
+        on =
+          e.clientX >= r.left &&
+          e.clientX <= r.right &&
+          e.clientY >= r.top &&
+          e.clientY <= r.bottom;
+      }
+      setActive(el, on);
+    }
+  }
+
+  function clearActive() {
+    for (const el of tagged) setActive(el, false);
+  }
+
   update();
+  document.addEventListener("pointermove", onPointerMove, { passive: true });
+  document.documentElement.addEventListener("mouseleave", clearActive);
+  window.addEventListener("blur", clearActive);
   // claude.ai is a single-page app: the bar can be replaced at any time.
   new MutationObserver(schedule).observe(document.documentElement, {
     childList: true,

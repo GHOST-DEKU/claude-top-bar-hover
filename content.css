@@ -6,9 +6,15 @@
     transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
   }
 
-  /* Visible: mouse over it, keyboard focus inside it (focus-visible, so a mouse
-     click that leaves focus on a button does not pin it open), or a menu is open
-     (the menu itself lives outside the bar, so hover alone would close the bar). */
+  /* Visible when:
+     - the mouse is inside the bar's box (data-top-bar-active, set by content.js;
+       needed because the real header ignores the mouse except on its buttons), or
+     - the mouse is over it, or
+     - keyboard focus is inside it (focus-visible, so a mouse click that leaves focus
+       on a button does not pin it open), or
+     - one of its menus is open (the menu lives outside the bar, so the mouse
+       leaving the bar would otherwise close it). */
+  [data-top-bar-hover][data-top-bar-active],
   [data-top-bar-hover]:hover,
   [data-top-bar-hover]:has(:focus-visible),
   [data-top-bar-hover]:has([aria-expanded="true"]),
