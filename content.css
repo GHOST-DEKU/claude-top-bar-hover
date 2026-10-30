@@ -1,0 +1,26 @@
+/* Only on devices that can really hover (not touch screens). */
+@media (hover: hover) and (pointer: fine) {
+  /* Hidden: fades out after a short pause, so a quick mouse slip doesn't flicker it. */
+  [data-top-bar-hover] {
+    opacity: 0;
+    transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
+  }
+
+  /* Visible: mouse over it, keyboard focus inside it (focus-visible, so a mouse
+     click that leaves focus on a button does not pin it open), or a menu is open
+     (the menu itself lives outside the bar, so hover alone would close the bar). */
+  [data-top-bar-hover]:hover,
+  [data-top-bar-hover]:has(:focus-visible),
+  [data-top-bar-hover]:has([aria-expanded="true"]),
+  [data-top-bar-hover]:has([data-state="open"]) {
+    opacity: 1;
+    transition-duration: 160ms;
+    transition-delay: 0s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-top-bar-hover] {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Top Bar on Hover",
+  "version": "1.0.0",
+  "description": "Hides the top bar on claude.ai and shows it only when you hover over it.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "css": ["content.css"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
