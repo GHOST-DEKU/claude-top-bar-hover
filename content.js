@@ -11,6 +11,7 @@
 (() => {
   const ATTR = "data-top-bar-hover";
   const ACTIVE = "data-top-bar-active";
+  const COLLAPSE = "data-top-bar-collapse"; // set on <html>, see update()
   const KNOWN = ".dframe-header";
   const PROBE_Y = 24; // probe line, inside a normal 40-60px bar
   const MIN_H = 32;
@@ -79,6 +80,14 @@
       el.setAttribute(ATTR, "");
       tagged.add(el);
     }
+    // Some pages (artifact pages) place their content below the bar using an inline
+    // `--bar-h` variable on <html>. Tell the CSS to zero it, so hiding the bar also
+    // gives the space back instead of leaving an empty strip.
+    const html = document.documentElement;
+    html.toggleAttribute(
+      COLLAPSE,
+      tagged.size > 0 && html.style.getPropertyValue("--bar-h") !== ""
+    );
   }
 
   function schedule() {
@@ -118,6 +127,11 @@
   new MutationObserver(schedule).observe(document.documentElement, {
     childList: true,
     subtree: true,
+  });
+  // The page may set --bar-h on <html> after we first look.
+  new MutationObserver(schedule).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["style"],
   });
   window.addEventListener("resize", schedule);
   window.addEventListener("popstate", schedule);

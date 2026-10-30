@@ -35,8 +35,12 @@ For a permanent install the add-on must be signed on addons.mozilla.org.)
 2. Fallback, if that class is ever renamed: any element that touches the top edge of the
    window, is bar-shaped (32 to 80 px high, at least 40% of the window wide) and contains a button.
 
-`content.css` hides the marked element with `opacity: 0`. The bar is not removed or moved,
-so the page layout does not change.
+`content.css` hides the marked element with `opacity: 0`. The bar is not removed or moved.
+
+On pages that reserve room for the bar with an inline `--bar-h` variable on `<html>`
+(artifact pages), the script sets `data-top-bar-collapse` on `<html>` and the CSS zeroes
+`--bar-h`. The content then moves up to use the full height, and the bar floats over it
+(with the page background) when shown. On other pages the bar keeps its place in the layout.
 
 The real header ignores the mouse except on its buttons (`pointer-events: none`), so CSS `:hover`
 alone would only fire over the invisible buttons. The script therefore watches the mouse and sets

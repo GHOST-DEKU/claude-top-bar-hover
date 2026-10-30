@@ -6,6 +6,17 @@
     transition: opacity 240ms cubic-bezier(0.32, 0.72, 0, 1) 350ms;
   }
 
+  /* Pages that reserve room for the bar with --bar-h (set inline on <html>): give the
+     room back, and let the bar float above the content when it is shown. `inherit`
+     gives it the page background so it is readable over the content. */
+  html[data-top-bar-collapse] {
+    --bar-h: 0px !important;
+  }
+  html[data-top-bar-collapse] [data-top-bar-hover] {
+    z-index: 50;
+    background-color: inherit;
+  }
+
   /* Visible when:
      - the mouse is inside the bar's box (data-top-bar-active, set by content.js;
        needed because the real header ignores the mouse except on its buttons), or
