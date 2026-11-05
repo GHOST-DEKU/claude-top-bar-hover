@@ -37,7 +37,9 @@ Settings are saved in your browser (`storage`, the only permission) and never le
 
 ## Install
 
-You need `bash` and `zip` to build. Then:
+**Firefox:** install it from the [Firefox Add-ons page](https://addons.mozilla.org/en-US/firefox/addon/claude-top-bar-on-hover/).
+
+**Chrome, Edge, Brave, or Firefox from source:** you need `bash` and `zip` to build. Then:
 
 ```bash
 git clone https://github.com/GHOST-DEKU/claude-top-bar-hover.git
@@ -52,12 +54,11 @@ This creates `dist/chrome` and `dist/firefox` (plus a `.zip` of each).
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and choose the `dist/chrome` folder.
 
-**Firefox:**
+**Firefox (from source):**
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on** and choose `dist/firefox/manifest.json`.
 
-Firefox removes temporary add-ons when it closes. A permanent install needs the add-on to be signed on
-addons.mozilla.org.
+Firefox removes temporary add-ons when it closes. For a permanent install, use the Add-ons page link above.
 
 **After an update:** run `./build.sh` again, click the reload icon on the extension in
 `chrome://extensions`, and refresh the Claude tab. The old version stays active until you do.
