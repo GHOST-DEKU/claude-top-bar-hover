@@ -3,11 +3,11 @@
 A small Chrome and Firefox extension that hides the top bar on [claude.ai](https://claude.ai)
 (sidebar button, title, Chat, Share, and so on) and shows it only when you move your mouse to
 the top of the page. You get the full window for your chat or artifact, and the bar is one
-mouse move away.
+mouse move away. Click the extension icon to change how it works.
 
 ## Features
 
-- **Hover to show.** Move the mouse over the top strip and the bar fades in (fast). Move away and it
+- **Hover to show.** Move the mouse to the top and the bar fades in (fast). Move away and it
   fades out after a short pause, so a quick slip of the mouse does not make it flicker.
 - **No empty strip.** On pages where the bar takes up space (for example an artifact opened from inside
   Claude), the page moves up to fill the window and the bar floats over it when shown.
@@ -16,7 +16,24 @@ mouse move away.
   title menu) and while you move through it with the keyboard (Tab or the arrow keys).
 - **Careful with the page.** Clicks still reach whatever is under the mouse. Focus that the page itself
   sets does not pin the bar open. Touch screens (no hover) are left alone. "Reduce motion" is respected.
-- **Private.** No permissions, no data collected, no network requests. It only runs on `https://claude.ai/*`.
+- **Private.** No data collected, no network requests. It only runs on `https://claude.ai/*`.
+
+### The popup
+
+Click the extension icon. The switch at the top turns the whole extension on or off. Four tabs:
+
+| Tab | What you can set |
+|---|---|
+| **Home** | Mode (Auto-hide, Always show, Shortcut only). A **peek timer** that keeps the bar shown for 10 s, 1 min or 5 min. **Room gained**: how much more page you see, from the real bar and window height. |
+| **Reveal** | Where the mouse must go: whole top, left corner or right corner. Zone height, wait before showing, wait before hiding. |
+| **Style** | How the bar appears: fade, slide up, soft blur or glow line. Speed. Picking a style or a speed shows the bar for a moment so you see it. |
+| **Pages** | Turn hiding on or off for Chats, Artifacts and Projects separately. Reset all. |
+
+The icon shows a small badge: the time left while the peek timer runs, or "off" while the extension is
+switched off. **Alt + B** shows or hides the bar (press again to hide). You can change the key in
+`chrome://extensions/shortcuts` (Firefox: Add-ons Manager, gear icon, Manage Extension Shortcuts).
+
+Settings are saved in your browser (`storage`, the only permission) and never leave it.
 
 ## Install
 
@@ -70,7 +87,12 @@ const d=e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return `${e.
 
 ## How it works
 
-Two files do the work: `content.js` (finds the bar, watches the mouse) and `content.css` (hides and shows it).
+`content.js` finds the bar and watches the mouse, and `content.css` hides and shows it.
+
+Settings and the popup: `popup.js` saves settings with `storage.local`. `content.js` reads them,
+listens for changes, and answers the popup's messages (state, peek timer, shortcut). `background.js`
+runs the Alt + B command and draws the icon badge. `content.css` gets the speed, the hide delay and the
+style from CSS variables and an attribute on `<html>`.
 
 **1. Finding the bar.** `content.js` marks the bar with `data-top-bar-hover`.
 First choice is the `.dframe-header` element. If Claude renames that class, it falls back to the shape of
@@ -84,7 +106,9 @@ is hidden at once, with no fade, so it does not flash.
 
 **3. Detecting hover.** The real header ignores the mouse except on its buttons
 (`pointer-events: none`), so CSS `:hover` alone would only work over the invisible buttons. The script
-watches the mouse and sets `data-top-bar-active` while the pointer is inside the bar's box. The
+watches the mouse and sets `data-top-bar-active` while the pointer is in the reveal zone (and, once the bar
+is shown, while it is over the bar). The "wait before showing" is a timer in the script; the "wait before
+hiding" is the CSS transition delay. The
 page gets no mouse events while the pointer is over an iframe (the artifact), so this is cleared when
 the pointer enters an iframe or leaves the page.
 
@@ -107,8 +131,14 @@ the pointer enters an iframe or leaves the page.
 - Detection depends on how claude.ai builds its page today. A big layout change could stop the bar
   from being found. The constants at the top of `content.js` are easy to adjust.
 - Tested in Chromium on mock pages copied from the real page structure, and by hand on the real artifact
-  page (opened directly and from inside Claude). The Firefox build uses the same code but has not been run.
+  page (opened directly and from inside Claude, version 1.0). The popup and its settings (version 1.1) are
+  tested on mock pages only. The Firefox build uses the same code but has not been run.
 - A floating bar covers the top 44 px of the page while it is shown.
+- The popup talks to the active tab, so it needs a claude.ai tab for the live parts (peek timer, room
+  gained, "this tab"). The settings tabs work everywhere.
+- The "glow line" style clips the bar to its own box while it is shown.
+- Alt + B can clash with other shortcuts or typing on some systems (on a Mac, Alt + B types a character).
+  Change it in the browser's shortcut settings.
 
 ## License
 

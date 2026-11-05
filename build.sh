@@ -7,7 +7,7 @@ rm -rf dist
 mkdir -p dist/chrome dist/firefox
 
 for target in chrome firefox; do
-  cp -r content.js content.css icons "dist/$target/"
+  cp -r content.js content.css popup.html popup.css popup.js background.js icons "dist/$target/"
 done
 cp manifest.json dist/chrome/manifest.json
 cp manifest.firefox.json dist/firefox/manifest.json
