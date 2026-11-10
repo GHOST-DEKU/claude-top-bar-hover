@@ -81,10 +81,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 .demo i { position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--demo-bar); opacity: 0.55; animation: var(--a) 2.2s infinite ease-in-out; }
 @keyframes fd { 0%, 15% { opacity: 0; } 40%, 70% { opacity: 0.55; } 95%, 100% { opacity: 0; } }
 @keyframes sl { 0%, 15% { transform: translateY(-100%); } 40%, 70% { transform: none; } 95%, 100% { transform: translateY(-100%); } }
-@keyframes bl { 0%, 15% { opacity: 0; filter: blur(5px); } 40%, 70% { opacity: 0.55; filter: none; } 95%, 100% { opacity: 0; filter: blur(5px); } }
+@keyframes bl { 0%, 15% { opacity: 0; filter: blur(8px); } 40%, 70% { opacity: 0.55; filter: none; } 80% { opacity: 0.45; filter: blur(8px); } 95%, 100% { opacity: 0; filter: blur(8px); } }
 @keyframes lnb { 0%, 15% { opacity: 0; } 40%, 70% { opacity: 0.55; } 95%, 100% { opacity: 0; } }
 @keyframes ln { 0%, 15% { opacity: 0.95; } 40%, 70% { opacity: 0; } 95%, 100% { opacity: 0.95; } }
-.demo.line::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--demo-orange); animation: ln 2.2s infinite ease-in-out; }
+.demo.line::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--demo-orange); box-shadow: 0 0 8px 2px var(--demo-orange); animation: ln 2.2s infinite ease-in-out; }
 
 @media (prefers-reduced-motion: reduce) {
   .sw, .sw::after { transition: none; }

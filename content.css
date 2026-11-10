@@ -13,18 +13,30 @@
 
   /* Other ways to hide (Style tab). The :not() list is the same as the "shown" rule below,
      so they never fight with it. */
-  /* Soft blur: the bar blurs while it fades. */
+  /* Soft blur: first the bar goes out of focus (strong blur), and only then it fades away.
+     Coming back, it focuses in while it fades in. */
   html[data-tbh-anim="blur"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) {
-    filter: blur(8px);
+    filter: blur(14px);
+    transition: filter var(--tbh-dur, 240ms) cubic-bezier(0.32, 0.72, 0, 1) var(--tbh-hide, 350ms),
+      opacity calc(var(--tbh-dur, 240ms) * 0.8) ease-in calc(var(--tbh-hide, 350ms) + var(--tbh-dur, 240ms) * 0.35);
   }
-  /* Slide up: the bar's contents slide up while the bar fades. The bar itself stays where it
-     is: if it moved away, the page below (an iframe for artifacts) would take the mouse and
-     the bar could never be brought back. */
+  /* Slide up: no fade at all. The bar's background goes clear and its contents slide up out of
+     the window. The bar's box stays where it is: if it moved away, the page below (an iframe
+     for artifacts) would take the mouse and the bar could never be brought back. */
+  html[data-tbh-anim="slide"] [data-top-bar-hover] {
+    transition-property: background-color, border-color, box-shadow;
+  }
+  html[data-tbh-anim="slide"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) {
+    opacity: 1;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
   html[data-tbh-anim="slide"] [data-top-bar-hover] > * {
     transition: transform var(--tbh-dur, 240ms) cubic-bezier(0.32, 0.72, 0, 1) var(--tbh-hide, 350ms);
   }
   html[data-tbh-anim="slide"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) > * {
-    transform: translateY(-100%);
+    transform: translateY(-110%);
   }
   html[data-tbh-anim="slide"] [data-top-bar-hover][data-top-bar-active] > *,
   html[data-tbh-anim="slide"] [data-top-bar-hover][data-top-bar-focus] > *,
@@ -43,7 +55,8 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 3px;
+    box-shadow: 0 0 14px 3px rgba(217, 119, 87, 0.65);
     z-index: 2147483647;
     pointer-events: none;
     background: linear-gradient(90deg, transparent, #d97757 18%, #d97757 82%, transparent);
@@ -89,9 +102,10 @@
   }
   html[data-tbh-anim="slide"]:has([data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin])):not(:has([data-top-bar-hover] [aria-expanded="true"])) .df-collapsed-chrome:not(:has(:focus-visible)) {
     transform: translateY(calc(-100% - 12px));
+    opacity: 1;
   }
   html[data-tbh-anim="blur"]:has([data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin])):not(:has([data-top-bar-hover] [aria-expanded="true"])) .df-collapsed-chrome:not(:has(:focus-visible)) {
-    filter: blur(8px);
+    filter: blur(14px);
   }
   html:has([data-top-bar-hover][data-top-bar-active]) .df-collapsed-chrome,
   html:has([data-top-bar-hover][data-top-bar-focus]) .df-collapsed-chrome,
