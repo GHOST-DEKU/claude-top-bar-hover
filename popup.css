@@ -82,9 +82,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
 @keyframes fd { 0%, 15% { opacity: 0; } 40%, 70% { opacity: 0.55; } 95%, 100% { opacity: 0; } }
 @keyframes sl { 0%, 15% { transform: translateY(-100%); } 40%, 70% { transform: none; } 95%, 100% { transform: translateY(-100%); } }
 @keyframes bl { 0%, 15% { opacity: 0; filter: blur(5px); } 40%, 70% { opacity: 0.55; filter: none; } 95%, 100% { opacity: 0; filter: blur(5px); } }
-@keyframes lnb { 0%, 15% { clip-path: inset(0 0 calc(100% - 2px) 0); background: var(--demo-orange); opacity: 1; } 40%, 70% { clip-path: inset(0); background: var(--demo-bar); opacity: 0.55; } 95%, 100% { clip-path: inset(0 0 calc(100% - 2px) 0); background: var(--demo-orange); opacity: 1; } }
+@keyframes lnb { 0%, 15% { opacity: 0; } 40%, 70% { opacity: 0.55; } 95%, 100% { opacity: 0; } }
+@keyframes ln { 0%, 15% { opacity: 0.95; } 40%, 70% { opacity: 0; } 95%, 100% { opacity: 0.95; } }
+.demo.line::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--demo-orange); animation: ln 2.2s infinite ease-in-out; }
 
 @media (prefers-reduced-motion: reduce) {
   .sw, .sw::after { transition: none; }
-  .demo i { animation: none; }
+  .demo i, .demo.line::after { animation: none; }
 }

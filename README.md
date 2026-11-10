@@ -26,7 +26,7 @@ Click the extension icon. The switch at the top turns the whole extension on or 
 |---|---|
 | **Home** | Mode (Auto-hide, Always show, Shortcut only). A **peek timer** that keeps the bar shown for 10 s, 1 min or 5 min. **Room gained**: how much more page you see, from the real bar and window height. |
 | **Reveal** | Where the mouse must go: whole top, left corner or right corner. Zone height, wait before showing, wait before hiding. |
-| **Style** | How the bar appears: fade, slide up, soft blur or glow line. Speed. Picking a style or a speed shows the bar for a moment so you see it. |
+| **Style** | How the bar appears: fade, slide up (the contents slide while the bar fades), soft blur or glow line (a thin orange line stays at the top while the bar is hidden). The sidebar button follows the same style. Speed. Picking a style or a speed shows the bar for a moment so you see it. |
 | **Pages** | Turn hiding on or off for Chats, Artifacts and Projects separately. Reset all. |
 
 The icon shows a small badge: the time left while the peek timer runs, or "off" while the extension is
@@ -137,7 +137,6 @@ the pointer enters an iframe or leaves the page.
 - A floating bar covers the top 44 px of the page while it is shown.
 - The popup talks to the active tab, so it needs a claude.ai tab for the live parts (peek timer, room
   gained, "this tab"). The settings tabs work everywhere.
-- The "glow line" style clips the bar to its own box while it is shown.
 - Alt + B can clash with other shortcuts or typing on some systems (on a Mac, Alt + B types a character).
   Change it in the browser's shortcut settings.
 

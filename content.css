@@ -5,7 +5,7 @@
   /* Hidden: waits --tbh-hide, then fades out, so a quick mouse slip doesn't flicker it. */
   [data-top-bar-hover] {
     opacity: 0;
-    transition-property: opacity, transform, filter, clip-path, box-shadow;
+    transition-property: opacity, transform, filter;
     transition-duration: var(--tbh-dur, 240ms);
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
     transition-delay: var(--tbh-hide, 350ms);
@@ -13,20 +13,46 @@
 
   /* Other ways to hide (Style tab). The :not() list is the same as the "shown" rule below,
      so they never fight with it. */
-  html[data-tbh-anim="slide"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) {
-    transform: translateY(-100%);
-  }
+  /* Soft blur: the bar blurs while it fades. */
   html[data-tbh-anim="blur"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) {
     filter: blur(8px);
   }
-  /* "Glow line": only the top 2px of the bar stays, drawn as an orange line. */
-  html[data-tbh-anim="line"] [data-top-bar-hover] {
-    clip-path: inset(0 0 0 0);
+  /* Slide up: the bar's contents slide up while the bar fades. The bar itself stays where it
+     is: if it moved away, the page below (an iframe for artifacts) would take the mouse and
+     the bar could never be brought back. */
+  html[data-tbh-anim="slide"] [data-top-bar-hover] > * {
+    transition: transform var(--tbh-dur, 240ms) cubic-bezier(0.32, 0.72, 0, 1) var(--tbh-hide, 350ms);
   }
-  html[data-tbh-anim="line"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) {
-    opacity: 1;
-    clip-path: inset(0 0 calc(100% - 2px) 0);
-    box-shadow: inset 0 2px 0 0 #d97757;
+  html[data-tbh-anim="slide"] [data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin], :has([aria-expanded="true"])) > * {
+    transform: translateY(-100%);
+  }
+  html[data-tbh-anim="slide"] [data-top-bar-hover][data-top-bar-active] > *,
+  html[data-tbh-anim="slide"] [data-top-bar-hover][data-top-bar-focus] > *,
+  html[data-tbh-anim="slide"] [data-top-bar-hover][data-top-bar-pin] > *,
+  html[data-tbh-anim="slide"] [data-top-bar-hover]:has([aria-expanded="true"]) > * {
+    transition-duration: calc(var(--tbh-dur, 240ms) * 0.67);
+    transition-delay: 0s;
+  }
+
+  /* "Glow line": the bar fades like "Fade", and a thin orange line stays at the top of the
+     window while the bar is hidden. The line is its own element (html::before), so it never
+     clips the bar's menus. It fades in when the bar fades out, and out when the bar comes back. */
+  html[data-tbh-anim="line"]::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 2147483647;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, #d97757 18%, #d97757 82%, transparent);
+    opacity: 0;
+    transition: opacity calc(var(--tbh-dur, 240ms) * 0.67) cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  html[data-tbh-anim="line"]:has([data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin])):not(:has([data-top-bar-hover] [aria-expanded="true"]))::before {
+    opacity: 0.9;
+    transition: opacity var(--tbh-dur, 240ms) cubic-bezier(0.32, 0.72, 0, 1) var(--tbh-hide, 350ms);
   }
 
   /* A bar that sits in the normal page flow (content.js marks it data-top-bar-float)
@@ -53,10 +79,19 @@
   }
 
   /* The app's collapsed-sidebar button floats next to the bar, outside it. Hide it
-     with the bar, and show it whenever the bar is shown. */
+     with the bar, in the same style (fade; slide up; blur), and show it whenever the bar is shown. */
   html:has([data-top-bar-hover]) .df-collapsed-chrome {
     opacity: 0;
-    transition: opacity var(--tbh-dur, 240ms) cubic-bezier(0.32, 0.72, 0, 1) var(--tbh-hide, 350ms);
+    transition-property: opacity, transform, filter;
+    transition-duration: var(--tbh-dur, 240ms);
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    transition-delay: var(--tbh-hide, 350ms);
+  }
+  html[data-tbh-anim="slide"]:has([data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin])):not(:has([data-top-bar-hover] [aria-expanded="true"])) .df-collapsed-chrome:not(:has(:focus-visible)) {
+    transform: translateY(calc(-100% - 12px));
+  }
+  html[data-tbh-anim="blur"]:has([data-top-bar-hover]:not([data-top-bar-active], [data-top-bar-focus], [data-top-bar-pin])):not(:has([data-top-bar-hover] [aria-expanded="true"])) .df-collapsed-chrome:not(:has(:focus-visible)) {
+    filter: blur(8px);
   }
   html:has([data-top-bar-hover][data-top-bar-active]) .df-collapsed-chrome,
   html:has([data-top-bar-hover][data-top-bar-focus]) .df-collapsed-chrome,
@@ -90,7 +125,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-top-bar-hover],
-  .df-collapsed-chrome {
+  [data-top-bar-hover] > *,
+  .df-collapsed-chrome,
+  html::before {
     transition: none !important;
   }
 }

@@ -62,7 +62,7 @@
     `<div class="rng"><div class="row"><label for="r-${key}">${label}</label><output data-out="${key}">${S[key]}${unit}</output></div><input id="r-${key}" type="range" min="${min}" max="${max}" step="${step}" value="${S[key]}" data-range="${key}" data-unit="${unit}"></div>`;
   const here = (k) => (st && st.pageType === k ? '<span class="here">this tab</span>' : "");
   const tile = (v, l, a) =>
-    `<button class="tile" type="button" aria-pressed="${S.anim === v}" data-act="anim" data-v="${v}"><span class="demo"><i style="--a:${a}"></i></span><b>${l}</b></button>`;
+    `<button class="tile" type="button" aria-pressed="${S.anim === v}" data-act="anim" data-v="${v}"><span class="demo${v === "line" ? " line" : ""}"><i style="--a:${a}"></i></span><b>${l}</b></button>`;
 
   const panes = {
     home: () => `<div><p class="lab">Mode</p>${seg("mode", S.mode, [["auto", "Auto-hide"], ["always", "Always show"], ["hidden", "Shortcut"]])}</div>
