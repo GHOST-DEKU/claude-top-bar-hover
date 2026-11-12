@@ -1,6 +1,6 @@
 # Claude Top Bar on Hover
 
-A small Chrome and Firefox extension that hides the top bar on [claude.ai](https://claude.ai)
+A small extension for Chrome, other Chromium browsers (Edge, Brave, Dia) and Firefox that hides the top bar on [claude.ai](https://claude.ai)
 (sidebar button, title, Chat, Share, and so on) and shows it only when you move your mouse to
 the top of the page. You get the full window for your chat or artifact, and the bar is one
 mouse move away. Click the extension icon to change how it works.
@@ -11,6 +11,8 @@ mouse move away. Click the extension icon to change how it works.
   fades out after a short pause, so a quick slip of the mouse does not make it flicker.
 - **No empty strip.** On pages where the bar takes up space (for example an artifact opened from inside
   Claude), the page moves up to fill the window and the bar floats over it when shown.
+- **Artifacts opened from a chat.** The viewer panel there has its own title bar (title, Copy, Share,
+  close). It is hidden and shown the same way as the main bar.
 - **Sidebar button included.** The collapsed-sidebar button hides and shows together with the bar.
 - **Stays up when you need it.** The bar stays visible while one of its menus is open (for example the
   title menu) and while you move through it with the keyboard (Tab or the arrow keys).
@@ -39,7 +41,7 @@ Settings are saved in your browser (`storage`, the only permission) and never le
 
 **Firefox:** install it from the [Firefox Add-ons page](https://addons.mozilla.org/en-US/firefox/addon/claude-top-bar-on-hover/).
 
-**Chrome, Edge, Brave, or Firefox from source:** you need `bash` and `zip` to build. Then:
+**Chrome, Edge, Brave, Dia (any Chromium browser), or Firefox from source:** you need `bash` and `zip` to build. Then:
 
 ```bash
 git clone https://github.com/GHOST-DEKU/claude-top-bar-hover.git
@@ -49,8 +51,8 @@ cd claude-top-bar-hover
 
 This creates `dist/chrome` and `dist/firefox` (plus a `.zip` of each).
 
-**Chrome, Edge, Brave:**
-1. Open `chrome://extensions`.
+**Chromium browsers:**
+1. Open the extensions page (`chrome://extensions`, or the same page of your browser).
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and choose the `dist/chrome` folder.
 
@@ -62,6 +64,7 @@ Firefox removes temporary add-ons when it closes. For a permanent install, use t
 
 **After an update:** run `./build.sh` again, click the reload icon on the extension in
 `chrome://extensions`, and refresh the Claude tab. The old version stays active until you do.
+Check the version number shown on the extensions page, so you know the new one is running.
 
 ## Troubleshooting
 
@@ -69,6 +72,8 @@ Firefox removes temporary add-ons when it closes. For a permanent install, use t
 |---|---|
 | The bar does not hide at all | Reload the extension, then refresh the Claude tab. Check the address starts with `https://claude.ai/`. |
 | The bar flickers or stays visible | Turn on the debug log (below) and open an issue with the lines it prints. |
+| Only the icons hide, the bar's background stays (for example in an artifact opened from a chat) | Update to 1.1.5 or newer, reload the extension and refresh the tab. If it still happens, open an issue with the output of the snippet below. |
+| All styles look the same | The style only shows when the bar hides. Check the version, reload the tab, then pick "Slide up" in the popup: the icons should move up out of the window. |
 | An empty strip is left at the top | Open an issue with the page address and the output of the snippet below. |
 
 **Debug log.** In the page console (F12, Console tab) run:
@@ -98,12 +103,22 @@ style from CSS variables and an attribute on `<html>`.
 **1. Finding the bar.** `content.js` marks the bar with `data-top-bar-hover`.
 First choice is the `.dframe-header` element. If Claude renames that class, it falls back to the shape of
 the bar: an element that touches the top edge of the window, is 32 to 80 px high, is at least 40% of the
-window wide, and contains a button. Claude is a single-page app, so a `MutationObserver` and a
+window wide, and contains a button. A second bar on top of a known one is also marked: an artifact
+opened from a chat shows a viewer panel with its own opaque title bar, which is not `.dframe-header`. The
+script looks for a bar that is at least 90% of the window wide and marks that one too. Claude is a single-page app, so a `MutationObserver` and a
 once-a-second check keep this up to date. A marked bar that looks wrong for a moment is kept for 1.5
 seconds, because pages briefly change their header while loading.
 
-**2. Hiding it.** The CSS sets `opacity: 0` on the marked bar and fades it in on hover. A newly marked bar
-is hidden at once, with no fade, so it does not flash.
+**2. Hiding it.** The CSS hides the marked bar by style, and shows it again on hover. A newly marked bar
+is hidden at once, with no animation, so it does not flash.
+- *Fade:* `opacity: 0`.
+- *Slide up:* no fade. The bar's background and border go clear, and its contents move up out of the
+  window. The bar's own box stays where it is, because if it moved away the page below (an iframe for
+  artifacts) would take the mouse and the bar could never come back. The real header wraps its icons in a
+  `display: contents` element, which cannot be moved, so the CSS moves the boxes inside it.
+- *Soft blur:* a strong blur first, then the fade starts a little later.
+- *Glow line:* the fade, plus a glowing line (`html::before`) at the top of the window, so it never clips
+  the bar's menus.
 
 **3. Detecting hover.** The real header ignores the mouse except on its buttons
 (`pointer-events: none`), so CSS `:hover` alone would only work over the invisible buttons. The script
@@ -131,9 +146,9 @@ the pointer enters an iframe or leaves the page.
 
 - Detection depends on how claude.ai builds its page today. A big layout change could stop the bar
   from being found. The constants at the top of `content.js` are easy to adjust.
-- Tested in Chromium on mock pages copied from the real page structure, and by hand on the real artifact
-  page (opened directly and from inside Claude, version 1.0). The popup and its settings (version 1.1) are
-  tested on mock pages only. The Firefox build uses the same code but has not been run.
+- Tested in Chromium on mock pages copied from the real claude.ai page structure (an artifact opened
+  directly, and opened from a chat). The animations were not watched on the live claude.ai pages during
+  development. The Firefox build uses the same code but has not been run.
 - A floating bar covers the top 44 px of the page while it is shown.
 - The popup talks to the active tab, so it needs a claude.ai tab for the live parts (peek timer, room
   gained, "this tab"). The settings tabs work everywhere.
