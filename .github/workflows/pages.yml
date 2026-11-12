@@ -1,0 +1,62 @@
+name: Website
+
+# Builds the website in website/ and publishes it to GitHub Pages.
+#
+# One-time setup: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# It runs when website files change on main, after a new release (so the changelog and the
+# version number refresh), or by hand from the Actions tab.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "manifest.json"
+      - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Install
+        working-directory: website
+        run: npm ci
+      - name: Build
+        working-directory: website
+        env:
+          BASE_PATH: /claude-top-bar-hover
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
