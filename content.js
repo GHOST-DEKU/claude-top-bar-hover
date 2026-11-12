@@ -28,6 +28,7 @@
   const MIN_H = 32;
   const MAX_H = 80;
   const MIN_WIDTH_RATIO = 0.4; // fallback: at least 40% of the window wide
+  const EXTRA_WIDTH_RATIO = 0.9; // a further bar on top of a known one must be nearly full width
   const CORNER_RATIO = 0.3; // left/right corner zones: 30% of the window width
 
   const GRACE_MS = 1500; // how long a tagged bar may look wrong before we untag it
@@ -115,9 +116,9 @@
 
   // Fallback: look at several points along the top, walk up from what is there,
   // and keep the outermost, widest bar-shaped ancestor.
-  function findByShape() {
+  function findByShape(ratio = MIN_WIDTH_RATIO) {
     const w = window.innerWidth;
-    const minWidth = w * MIN_WIDTH_RATIO;
+    const minWidth = w * ratio;
     const xs = [w - 30, w - 120, w / 2, 120, 30];
     let best = null;
     let bestWidth = 0;
@@ -235,6 +236,14 @@
     if (!tagged.size) {
       const found = findByShape();
       if (found) tag(found);
+    } else {
+      // A second, full-width bar may sit on top of the known one: opening an artifact from
+      // a chat shows a viewer panel with its own title bar over the page, and the
+      // .dframe-header under it is then not the bar you see. Tag that one too.
+      const extra = findByShape(EXTRA_WIDTH_RATIO);
+      if (extra && ![...tagged].some((t) => t === extra || t.contains(extra) || extra.contains(t))) {
+        tag(extra);
+      }
     }
     for (const el of tagged) syncBg(el);
     syncCollapse();
