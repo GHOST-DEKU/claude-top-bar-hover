@@ -1,5 +1,6 @@
 <script>
 	import Hero from '#lib/Hero.svelte';
+	import CordDemo from '#lib/CordDemo.svelte';
 </script>
 
 <svelte:head>
@@ -9,4 +10,5 @@
 
 <main>
 	<Hero />
+	<CordDemo />
 </main>
