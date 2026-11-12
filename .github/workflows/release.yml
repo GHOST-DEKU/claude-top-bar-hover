@@ -1,0 +1,72 @@
+name: Release
+
+# Builds the Chrome and Firefox zips and publishes them as a GitHub release.
+#
+# How to use:
+#   1. Change "version" in manifest.json AND manifest.firefox.json (for example to 1.1.6) and push to main.
+#   2. Either push a tag:  git tag v1.1.6 && git push origin v1.1.6
+#      or open the Actions tab, pick "Release", click "Run workflow" and type v1.1.6.
+# The tag must match the version in both manifest files, or the run stops with an error.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to release, for example v1.1.6"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Work out the tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          TAG="${INPUT_TAG:-$GITHUB_REF_NAME}"
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "Tag '$TAG' must look like v1.2.3"; exit 1 ;;
+          esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check the tag matches both manifests
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          for f in manifest.json manifest.firefox.json; do
+            v="v$(jq -r .version "$f")"
+            if [ "$v" != "$TAG" ]; then
+              echo "$f says $v but the tag is $TAG. Update the manifest version first."
+              exit 1
+            fi
+          done
+
+      - name: Build the zips
+        run: ./build.sh
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          FILES="dist/claude-top-bar-hover-chrome.zip dist/claude-top-bar-hover-firefox.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" $FILES --clobber
+          else
+            gh release create "$TAG" $FILES --title "$TAG" --generate-notes --target "$GITHUB_SHA"
+          fi
