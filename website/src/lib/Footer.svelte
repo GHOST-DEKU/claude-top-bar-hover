@@ -7,6 +7,7 @@
 	<div class="in">
 		<span>Claude Top Bar on Hover · v{VERSION}</span>
 		<nav aria-label="Footer">
+			<a href={resolve('/screenshots/')}>Screenshots</a>
 			<a href={resolve('/changelog/')}>Changelog</a>
 			<a href={resolve('/privacy/')}>Privacy &amp; FAQ</a>
 			<a href={FIREFOX} rel="noopener">Firefox Add-ons</a>

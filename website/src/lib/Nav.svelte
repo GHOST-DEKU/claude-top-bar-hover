@@ -72,6 +72,7 @@
 		['#how', 'How it works'],
 		['#features', 'Features'],
 		['#install', 'Install'],
+		['/screenshots/', 'Screenshots'],
 		['/changelog/', 'Changelog'],
 		['/privacy/', 'Privacy & FAQ']
 	];
