@@ -1,54 +1,16 @@
-# sv
+# Website
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The project site for Claude Top Bar on Hover. SvelteKit (static), Tailwind CSS, no tracking.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
+```bash
+cd website
+npm ci
+npm run dev            # http://localhost:5173
+BASE_PATH=/claude-top-bar-hover npm run build   # what GitHub Actions runs
 ```
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@1.3.0 create --template minimal --types jsdoc --add tailwindcss="plugins:none" sveltekit-adapter="adapter:static" --no-install website
-```
-
-## Adding features
-
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
+- Colours and shapes copy the extension popup (`src/routes/layout.css`). Dark is the default.
+- The version number comes from `../manifest.json`.
+- The changelog page is read from GitHub releases while building. If GitHub cannot be reached it shows a link instead.
+- `static/screenshots/` are real renders of `popup.html` (with sample numbers).
+- Deploys with `.github/workflows/pages.yml`. One-time setup: Settings > Pages > Source: GitHub Actions.
